@@ -3,8 +3,10 @@ package technopark_db.data
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Component
+import technopark_db.models.NotFoundNoteException
 import technopark_db.models.NoteModel
 import java.sql.Connection
+import java.sql.Statement
 
 @Component
 class NotesData(private val template: JdbcTemplate) {
@@ -47,6 +49,10 @@ class NotesData(private val template: JdbcTemplate) {
         return template.query(sql, argsObject.toArray(), NOTEMAPPER)
     }
 
+    fun getById(id: Int): NoteModel {
+        return template.queryForObject("SELECT * FROM notes WHERE id = ?;", NOTEMAPPER, id)
+    }
+
     fun put(notes: List<NoteModel>): List<NoteModel> {
         val connection = template.dataSource.connection
         try {
@@ -61,7 +67,7 @@ class NotesData(private val template: JdbcTemplate) {
     private fun putThrowables(connection: Connection, notes: List<NoteModel>): List<NoteModel> {
         val idsResultSet = template.queryForRowSet("SELECT nextval('notes_id_seq') FROM generate_series(1, ?);", notes.size)
 
-        val ps = connection.prepareStatement("INSERT INTO notes(id, description, completed) VALUES (?, ?, ?);")
+        val ps = connection.prepareStatement("INSERT INTO notes(id, description, completed) VALUES (?, ?, ?);", Statement.NO_GENERATED_KEYS)
 
         notes.forEach({
             ps.apply {
@@ -77,7 +83,7 @@ class NotesData(private val template: JdbcTemplate) {
         try {
             val insertCount = ps.executeBatch()
             if (insertCount.contains(0)) {
-                throw RuntimeException()
+                throw RuntimeException("Ошибка при заполнение")
             }
             connection.commit()
         } catch (e: Exception) {
@@ -86,5 +92,20 @@ class NotesData(private val template: JdbcTemplate) {
         }
 
         return notes
+    }
+
+    fun editNote(note: NoteModel): NoteModel {
+        return template.queryForObject("UPDATE notes SET (description, completed) = (coalesce(?, description), coalesce(?, completed)) WHERE id = ? RETURNING *;",
+                NOTEMAPPER,
+                note.description,
+                note.completed,
+                note.id)
+    }
+
+    fun removeNote(id: Int) {
+        val count = template.update("DELETE FROM notes WHERE id = ?;", id)
+        if (count == 0) {
+            throw NotFoundNoteException()
+        }
     }
 }
