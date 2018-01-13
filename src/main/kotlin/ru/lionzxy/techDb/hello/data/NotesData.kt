@@ -1,10 +1,11 @@
-package technopark_db.data
+package ru.lionzxy.techDb.hello.data
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Component
-import technopark_db.models.NotFoundNoteException
-import technopark_db.models.NoteModel
+import ru.lionzxy.techDb.hello.model.Item
+import ru.lionzxy.techDb.hello.models.NotFoundNoteException
+import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.Statement
 
@@ -15,18 +16,20 @@ class NotesData(private val template: JdbcTemplate) {
         private const val COLUMN_COMPLETED = "completed"
         private const val COLUMN_ID = "id"
 
-        val NOTEMAPPER = RowMapper<NoteModel> { row, _ ->
-            NoteModel(row.getString(COLUMN_DESCRIPTION),
-                    row.getBoolean(COLUMN_COMPLETED),
-                    row.getInt(COLUMN_ID))
+        val NOTEMAPPER = RowMapper<Item> { row, _ ->
+            val item = Item()
+            item.id = row.getLong(COLUMN_ID)
+            item.description = row.getString(COLUMN_DESCRIPTION)
+            item.completed = row.getBoolean(COLUMN_COMPLETED)
+            return@RowMapper item
         }
     }
 
-    fun get(since: Int, desc: Boolean, limit: Int): List<NoteModel> {
+    fun get(since: BigDecimal?, desc: Boolean, limit: BigDecimal?): List<Item> {
         var sql = "SELECT * FROM notes "
         val argsObject = ArrayList<Any>()
 
-        if (since != -1) {
+        if (since != null) {
             sql += if (desc) {
                 "WHERE id < ? "
             } else {
@@ -41,7 +44,7 @@ class NotesData(private val template: JdbcTemplate) {
             "ORDER BY id ASC "
         }
 
-        if (limit != -1) {
+        if (limit != null) {
             sql += "LIMIT ?"
             argsObject.add(limit)
         }
@@ -49,11 +52,11 @@ class NotesData(private val template: JdbcTemplate) {
         return template.query(sql, argsObject.toArray(), NOTEMAPPER)
     }
 
-    fun getById(id: Int): NoteModel {
+    fun getById(id: BigDecimal): Item {
         return template.queryForObject("SELECT * FROM notes WHERE id = ?;", NOTEMAPPER, id)
     }
 
-    fun put(notes: List<NoteModel>): List<NoteModel> {
+    fun put(notes: List<Item>): List<Item> {
         val connection = template.dataSource.connection
         try {
             connection.autoCommit = false
@@ -64,7 +67,7 @@ class NotesData(private val template: JdbcTemplate) {
         }
     }
 
-    private fun putThrowables(connection: Connection, notes: List<NoteModel>): List<NoteModel> {
+    private fun putThrowables(connection: Connection, notes: List<Item>): List<Item> {
         val idsResultSet = template.queryForRowSet("SELECT nextval('notes_id_seq') FROM generate_series(1, ?);", notes.size)
 
         val ps = connection.prepareStatement("INSERT INTO notes(id, description, completed) VALUES (?, ?, ?);", Statement.NO_GENERATED_KEYS)
@@ -72,8 +75,8 @@ class NotesData(private val template: JdbcTemplate) {
         notes.forEach({
             ps.apply {
                 idsResultSet.next()
-                it.id = idsResultSet.getInt(1)
-                setInt(1, it.id)
+                it.id = idsResultSet.getLong(1)
+                setLong(1, it.id)
                 setString(2, it.description)
                 setBoolean(3, it.completed)
                 addBatch()
@@ -94,7 +97,7 @@ class NotesData(private val template: JdbcTemplate) {
         return notes
     }
 
-    fun editNote(note: NoteModel): NoteModel {
+    fun editNote(note: Item): Item {
         return template.queryForObject("UPDATE notes SET (description, completed) = (coalesce(?, description), coalesce(?, completed)) WHERE id = ? RETURNING *;",
                 NOTEMAPPER,
                 note.description,
@@ -102,7 +105,7 @@ class NotesData(private val template: JdbcTemplate) {
                 note.id)
     }
 
-    fun removeNote(id: Int) {
+    fun removeNote(id: BigDecimal) {
         val count = template.update("DELETE FROM notes WHERE id = ?;", id)
         if (count == 0) {
             throw NotFoundNoteException()

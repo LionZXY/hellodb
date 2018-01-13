@@ -1,3 +1,3 @@
-package technopark_db.models
+package ru.lionzxy.techDb.hello.models
 
 class NotFoundNoteException() : RuntimeException() {}
