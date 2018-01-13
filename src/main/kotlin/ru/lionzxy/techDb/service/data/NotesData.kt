@@ -1,10 +1,10 @@
-package ru.lionzxy.techDb.hello.data
+package ru.lionzxy.techDb.service.data
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Component
 import ru.lionzxy.techDb.hello.model.Item
-import ru.lionzxy.techDb.hello.models.NotFoundNoteException
+import ru.lionzxy.techDb.service.models.NotFoundNoteException
 import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.Statement

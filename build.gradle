@@ -10,10 +10,11 @@ buildscript {
         maven { url "http://repo.spring.io/snapshot" }
         maven { url "http://repo.spring.io/milestone" }
     }
+
     dependencies {
         classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
-        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
+        classpath("org.jetbrains.kotlin:kotlin-allopen:$kotlin_version")
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
     }
 }
@@ -67,7 +68,7 @@ sourceSets {
 }
 
 springBoot {
-    mainClass = 'ru.lionzxy.techDb.hello.Application'
+    mainClass = 'ru.lionzxy.techDb.service.Application'
 }
 
 task wrapper(type: Wrapper) {
@@ -91,7 +92,7 @@ dependencies {
 
     compile("com.zaxxer:HikariCP:2.7.2")
     compile("org.postgresql:postgresql")
-    compile("com.fasterxml.jackson.module:jackson-module-kotlin:+")
+    compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.10")
 }
 
 compileKotlin {

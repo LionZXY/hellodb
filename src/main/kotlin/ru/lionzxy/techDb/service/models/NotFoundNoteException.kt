@@ -1,3 +1,3 @@
-package ru.lionzxy.techDb.hello.models
+package ru.lionzxy.techDb.service.models
 
 class NotFoundNoteException() : RuntimeException() {}

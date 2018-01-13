@@ -1,19 +1,24 @@
-package ru.lionzxy.techDb.hello.controllers
+package ru.lionzxy.techDb.service.controllers
 
 import javassist.tools.web.BadHttpRequest
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import ru.lionzxy.techDb.hello.api.ApiApi
-import ru.lionzxy.techDb.hello.api.ApiApiController
-import ru.lionzxy.techDb.hello.data.NotesData
 import ru.lionzxy.techDb.hello.model.Item
-import ru.lionzxy.techDb.hello.models.NotFoundNoteException
+import ru.lionzxy.techDb.service.data.NotesData
+import ru.lionzxy.techDb.service.models.NotFoundNoteException
 import java.math.BigDecimal
 
 
-class NotesController(private val notesData: NotesData) : ApiApiController() {
+@Controller
+class NotesController : ApiApi {
+
+    @Autowired
+    private lateinit var notesData: NotesData
+
     override fun addMulti(body: MutableList<Item>?): ResponseEntity<MutableList<Item>> {
         var list = listOf<Item>()
         if (body != null) {
